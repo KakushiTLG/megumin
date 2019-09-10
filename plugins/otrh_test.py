@@ -26,22 +26,27 @@ class OtrhBattle:
 
             if _enemy['hp'] > 0:
                 atk = random.randint(round(_enemy['atk'] * 0.8), round(_enemy['atk'] * 1.2))
+                if _enemy['crit'] / 2 < random.randint(1, 70):
+                    atk *= 1.5
                 atk = round(atk)
                 _player['hp'] -= atk
-                text += '\n{} нанес удар 💥{}'.format(_enemy['name'], atk)
+                text += '\n{} нанес удар 💥{}'.format(_enemy['nick'], atk)
 
             moves += 1
 
+            
+        winner = 'player'
         if _player['hp'] > 0:
-            text += '\n\n{} одержал победу над {}'.format(_player['nick'], _enemy['name'])
+            text += '\n\n{} одержал победу над {}'.format(_player['nick'], _enemy['nick'])
         else:
-            text += '\n\n{} одержал победу над {}'.format(_enemy['name'], _player['nick'])
+            winner = 'enemy'
+            text += '\n\n{} одержал победу над {}'.format(_enemy['nick'], _player['nick'])
 
-        return text
+        return [text, winner]
 
 
 player = {'nick': 'otrh', 'hp': 100, 'atk': 5, 'fatk': 5, 'crit': 5}
-enemy = {'name': 'mob', 'hp': 100, 'atk': 5}
+enemy = {'nick': 'mob', 'hp': 100, 'atk': 5, 'fatk': 5, 'crit': 5}
 test = OtrhBattle.fight(player, enemy)
 print(test)
 #Вызывать по примеру выше. Вернет чисто текст
