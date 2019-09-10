@@ -38,7 +38,7 @@ def putpoints(m,w,p):
         db.close()
 @bot.message_handler(commands=['giveaway'])
 def giveaway(m):
-    randompoints = random.randint(5, 30)
+    randompoints = random.randint(30, 90)
     db = pymysql.connect(host='localhost',
                          user='root',
                          password='maz1aan16v',                             
@@ -84,6 +84,9 @@ def giveaway(m):
     
 @bot.message_handler(commands=['mystery'])
 def megamystery(m):
+    if m.chat.id != chancechat:
+        bot.reply_to(m, "Прости, я работаю только в @chance_estate")
+        return
     db = pymysql.connect(host='localhost',
                          user='root',
                          password='maz1aan16v',                             
@@ -114,14 +117,14 @@ def megamystery(m):
     if len(m.text.split(' ')) > 1:
         text = m.text.replace('/mystery ', '', 1)
         if(text) == str(mystery_number):
-            bot.reply_to(m, 'Ты выиграл! Держи мемчик. Начислено 10 поинтов и 10 опыта!')
+            bot.reply_to(m, 'Ты выиграл! Держи мемчик. Начислено 50 поинтов и 20 опыта!')
             filename = './media/memes/' + random.choice(['file1', 'file2', 'file3', 'file4', 'file5', 'file6', 'file7', 'file8', 'file9', 'file10', 'file11', 'file12', 'file13', 'file14', 'file15', 'file16', 'file17', 'file18', 'file19', 'file20', 'file21', 'file22', 'file23', 'file24', 'file25', 'file26', 'file27', 'file28', 'file29', 'file30', 'file31', 'file32', 'file33', 'file34', 'file35']) + '.jpg' 
             with open (filename, "rb") as file: # открывать как бинарник
                 bot.send_photo(m.chat.id, file)
       #      q = record[0]
         #    print('q: ' + int(record[0]) )
         #    print('qw: ' + record[0] )
-                e = 10
+                e = 50
                 if (m.chat.id == chancechat):
                     w = int(result['points']) + e
                     putpoints(m,w,p)
@@ -132,7 +135,7 @@ def megamystery(m):
                              charset='utf8mb4',
                              cursorclass=pymysql.cursors.DictCursor)
                     with db.cursor() as cursor:
-                        sql = "UPDATE `users` SET `exp` = exp + 10 WHERE user_id = %s"
+                        sql = "UPDATE `users` SET `exp` = exp + 20 WHERE user_id = %s"
                         cursor.execute(sql, (str(m.from_user.id)))
                         db.commit()
                         db.close()
@@ -145,14 +148,14 @@ def megamystery(m):
     else:
         random_player = random.randrange(1, 11, 1)
         if str(random_player) == str(mystery_number):
-            bot.reply_to(m, 'Силой двух рандомов обьявляю тебя победителем! Держи мемчик. Начислено 15 поинтов и 10 опыта.')
+            bot.reply_to(m, 'Силой двух рандомов обьявляю тебя победителем! Держи мемчик. Начислено 50 поинтов и 35 опыта.')
             filename = './media/memes/' + random.choice(['file1', 'file2', 'file3', 'file4', 'file5', 'file6', 'file7', 'file8', 'file9', 'file10', 'file11', 'file12', 'file13', 'file14', 'file15', 'file16', 'file17', 'file18', 'file19', 'file20', 'file21', 'file22', 'file23', 'file24', 'file25', 'file26', 'file27', 'file28', 'file29', 'file30', 'file31', 'file32', 'file33', 'file34', 'file35']) + '.jpg' 
             with open (filename, "rb") as file: # открывать как бинарник
                 bot.send_photo(m.chat.id, file)
       #      q = record[0]
         #    print('q: ' + int(record[0]) )
         #    print('qw: ' + record[0] )
-                e = 15
+                e = 50
                 w = int(result['points']) + e
           #  print( 'q:')
                 if (m.chat.id == chancechat):
@@ -165,7 +168,7 @@ def megamystery(m):
                              charset='utf8mb4',
                              cursorclass=pymysql.cursors.DictCursor)
                     with db.cursor() as cursor:
-                        sql = "UPDATE `users` SET `exp` = exp + 10 WHERE user_id = %s"
+                        sql = "UPDATE `users` SET `exp` = exp + 35 WHERE user_id = %s"
                         cursor.execute(sql, (str(m.from_user.id)))
                         db.commit()
                         db.close()

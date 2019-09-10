@@ -1,3 +1,46 @@
+@bot.message_handler(commands=['top'])
+def topLvl(m):
+    db = pymysql.connect(host='localhost',
+                         user='root',
+                         password='maz1aan16v',                             
+                         db='Megumin',
+                         charset='utf8mb4',
+                         cursorclass=pymysql.cursors.DictCursor)
+    with db.cursor() as cursor:
+        sql = "SELECT lvl, username FROM users ORDER BY lvl DESC Limit 3"
+        cursor.execute(sql)
+        result = cursor.fetchall()
+        top = ""
+        count = 0
+        for dict in result:
+            count += 1
+            if count == 1:
+                id = "🥇"
+            elif count == 2:
+                id = "🥈"
+            elif count == 3:
+                id = "🥉"
+            top += str(id) + str(dict['username']) + " - " + str(dict['lvl']) + ' lvl' + str(id) + '\n'
+            sql = "SELECT points, username FROM users ORDER BY points DESC Limit 3"
+            cursor.execute(sql)
+            pointres = cursor.fetchall()
+            topPoints = ""
+            countPoints = 0
+        for dict in pointres:
+            countPoints += 1
+            if countPoints == 1:
+                idp = "🥇"
+            elif countPoints == 2:
+                idp = "🥈"
+            elif countPoints == 3:
+                idp = "🥉"
+            topPoints += str(idp) + str(dict['username']) + " - " + str(dict['points']) + ' points' + str(idp) + '\n'
+    db.close()
+    bot.reply_to(m, "ТОП игроков по уровню: \n" + str(top) + "\n \n ТОП игроков по поинтам:\n" + str(topPoints))
+    
+        
+        
+        
 @bot.message_handler(commands=['promo'])
 def promo(m):
     if len(m.text.split(' ')) > 1:
@@ -9,7 +52,7 @@ def promo(m):
                          charset='utf8mb4',
                          cursorclass=pymysql.cursors.DictCursor)
         with db.cursor() as cursor:
-            sql = "SELECT `status`, `count` FROM `promo` WHERE `promo` = %s"
+            sql = "SELECT `status`, `count` FROM `promo` WHERE `promo` = %s AND `status` = 0"
             cursor.execute(sql, (str(text)))
             result = cursor.fetchone()
             if result:
@@ -25,18 +68,41 @@ def promo(m):
                     bot.reply_to(m, "Вы успешно активировали промокод на сумму " + str(count) + " поинтов.")
                     db.close()
                 else:
-                    bot.reply_to(m, "Промокод уже активирован.")
+                    bot.reply_to(m, "Неверный промокод.")
                     db.close()
                     return
             else:
-                bot.reply_to(m, "Такого промокода не существует.")
+                bot.reply_to(m, "Неверный промокод.")
                 db.close()
                 return
     else:
         bot.reply_to(m, "Если у вас есть промокод - введите его после /promo")
         return
         
-        
+@bot.message_handler(commands=['gpromo'])
+def genPromo(m):
+    if str(m.from_user.id) in owner:
+        pass
+    else:
+        bot.reply_to(m, "Да нет, дружок, так не пойдет...")
+        return
+    symbol = 'QWERTYUIOPASDFGHJKLZXCVBNM1234567890'
+    text = ''
+    for i in range(10):
+        text += random.choice(symbol)
+    db = pymysql.connect(host='localhost',
+                         user='root',
+                         password='maz1aan16v',                             
+                         db='Megumin',
+                         charset='utf8mb4',
+                         cursorclass=pymysql.cursors.DictCursor)
+    with db.cursor() as cursor:
+        sql = "INSERT INTO promo (promo, count, status) VALUES (%s, 100, '0')" 
+        cursor.execute(sql, (str(text)))
+        db.commit()
+        db.close()
+    gpromo = bot.send_message(chancechat, "Promo: \n*{}*".format(str(text)), None, None, None,'markdown')
+    bot.pin_chat_message(chancechat, gpromo.message_id)
 @bot.message_handler(commands=['createpromo'])
 def createPromo(m):
     if str(m.from_user.id) in owner:
@@ -83,18 +149,20 @@ def referals(m):
         sql = "SELECT `username`, `lvl` FROM `users` WHERE `ref` = %s"
         cursor.execute(sql, (refer))
         referal = cursor.fetchall()
-        print(referal)
-        if referal:
-            pass
-        else:
-            referals = 'У вас нет рефералов'
     db.close()
+    if referal:
+        pass
+    else:
+        bot.reply_to(m, "У вас нет рефералов.")
+        return
     referals = "\n"
     for dict in referal:
         referals += dict['username'] + " - " + str(dict['lvl']) + ' lvl \n'
         print(referals)
-    bot.reply_to(m, "Список ваших рефералов, " + str(refer) + ": \n" + str(referals))
-
+    if referals:
+        bot.reply_to(m, "Список ваших рефералов, " + str(refer) + ": \n" + str(referals))
+    else:
+        referals = 'У вас нет рефералов'
 @bot.message_handler(commands=['promolist'])
 def promoList(m):
     if str(m.from_user.id) in owner:
@@ -119,7 +187,11 @@ def pay(m):
         payfrom = m.from_user.id
         payto = str(text[0])
         paySum = int(text[1])
-        pass
+        if paySum >= 1:
+            pass
+        else:
+            bot.reply_to(m, "^=^")
+            return
     else:
         bot.reply_to(m, "Используйте /pay [никнейм игрока] [сумма]")
         return
@@ -199,14 +271,14 @@ def ref(m):
                         sql = "UPDATE `users` SET `ref` = %s WHERE `user_id` = %s"
                         cursor.execute(sql, (str(text), m.from_user.id))
                         db.commit()
-                        sql = "UPDATE `users` SET `points` = points + 50 WHERE `user_id` = %s"
+                        sql = "UPDATE `users` SET `points` = points + 100 WHERE `user_id` = %s"
                         cursor.execute(sql, (m.from_user.id))
                         db.commit()
-                        sql = "UPDATE `users` SET `points` = points + 50 WHERE `username` = %s"
+                        sql = "UPDATE `users` SET `points` = points + 200 WHERE `username` = %s"
                         cursor.execute(sql, (text))
                         db.commit()
                         db.close()
-                        bot.reply_to(m, "Ты стал рефералом " + text + ". Реферал и рефер получили по 50 поинтов.")
+                        bot.reply_to(m, "Ты стал рефералом " + text + ". Реферал и рефер получили 100 и 200 поинтов.")
                     except:
                         bot.reply_to(m, "Ошибка.")
     else:
@@ -229,7 +301,7 @@ def profileBeta(m):
             user_id = result['id']
             username = result['username']
             exp = result['exp']
-            lvl = result['lvl']
+            lvl = int(result['lvl'])
             points = result['points']
             atk = result['atk']
             hp = result['hp']
@@ -237,12 +309,13 @@ def profileBeta(m):
             creet = result['creet']
             local = int(result['local'])
             ref = result['ref']
+            krazha = result['krazha']
             if ref:
                 ref = result['ref']
             else:
                 ref = 'Отсуствует'
         else:
-            sql = "INSERT INTO users (username, user_id, lvl, points, atk, hp) VALUES (%s, %s, '1', '0', '5', '10')"
+            sql = "INSERT INTO users (username, user_id, lvl, points, atk, hp) VALUES (%s, %s, '1', '0', '25', '25')"
             cursor.execute(sql, (m.from_user.username, m.from_user.id))
             db.commit()
             db.close()
@@ -250,8 +323,8 @@ def profileBeta(m):
             username = m.from_user.username
             lvl = int('1')
             points = int('0')
-            atk = 5
-            hp = 10
+            atk = 0
+            hp = 0
             exp = 0
             fatk = 10
             creet = 5
@@ -259,25 +332,37 @@ def profileBeta(m):
             ref = 'Отсутствует'
             print('net')
     needexp = int(lvl) * 100
+    BM = int(atk + hp + (((fatk/100) + (creet/100)) * 10))
     if str(m.from_user.id) in donators:
         donate = '✅Активен'
     else:
         donate = '❌'
     if local == 1:
         location = "Respawn"
-    if local == 2:
+        if (lvl >= 5):
+            locinfo = "\n🆕Вам доступна локация ''Таксопарк''! Используйте /next_location для перехода🆕"
+        else:
+            locinfo = ""
+    elif local == 2:
         location = "Таксопарк"
-    if local == 3:
+        if (lvl >= 7):
+            locinfo = "\n🆕Вам доступна локация ''Dungeon''! Используйте /next_location для перехода🆕"
+        else:
+            locinfo = ""
+    elif local == 3:
         location = "Dungeon"
-    if (lvl >= 6) and (local == 1):
-        locinfo = "\n🆕Вам доступна локация ''Таксопарк''! Используйте /next_location для перехода🆕"
-    else:
+        if (lvl >= 8):
+            locinfo = "\n🆕Вам доступна локация ''Мэрия''! Используйте /next_location для перехода🆕"
+        else:
+            locinfo = ""
+    elif local == 4:
+        location = "Мэрия"
         locinfo = ""
     if lvl >= 3 :
-        stats = "🕴Профиль🕴 \n \n📘Ваш никнейм - " + str(username) + "\n📕Ваш ID - " + str(user_id) + "\n🔰Донат-статус - " + str(donate) + "\n📒Количество поинтов - " + str(points) + "\n⭐️Опыт: " + str(exp) + " / {0} \n📗Ваш уровень - " + str(lvl) + "\n◻️Ваш реферер: " + str(ref) + "\n📡Локация - " + str(location) + "\n💢Ваша атака - " + str(atk) + "\n❤️Ваше здоровье - " + str(hp) + "\n🦀Шанс первой атаки - " + str(fatk) + "% \n💥Шанс крита - " + str(creet) + "%" + "\n        /myrefs              /shop" + str(locinfo)
+        stats = "🕴Профиль🕴 \n \n📘Ваш никнейм - " + str(username) + "\n📕Ваш ID - " + str(user_id) + "\n🔰Донат-статус - " + str(donate) + "\n📒Количество поинтов - " + str(points) + "\n⭐️Опыт: " + str(exp) + " / {0} \n📗Ваш уровень - " + str(lvl) + "\n◻️Ваш реферер: " + str(ref) + "\n📡Локация - " + str(location) + "\n💪Очки Боевой Мощи - " + str(BM) + "\n💢Ваша атака - " + str(atk) + "\n❤️Ваше здоровье - " + str(hp) + "\n🦀Шанс первой атаки - " + str(fatk) + "% \n💥Шанс крита - " + str(creet) + "% \n🤛Навык кражи - " + str(krazha) + " \n        /myrefs              /shop" + str(locinfo)
         profilemsg = bot.reply_to(m, stats.format(str(needexp)))
     else:
-        stats = "🕴Профиль🕴 \n \n📘Ваш никнейм - " + str(username) + "\n📕Ваш ID - " + str(user_id) + "\n🔰Донат-статус - " + str(donate) + "\n📒Количество поинтов - " + str(points) + "\n⭐️Опыт: " + str(exp) + " / {0} \n📗Ваш уровень - " + str(lvl) + "\n◻️Ваш реферер: " + str(ref) + "\n               /myrefs"
+        stats = "🕴Профиль🕴 \n \n📘Ваш никнейм - " + str(username) + "\n📕Ваш ID - " + str(user_id) + "\n🔰Донат-статус - " + str(donate) + "\n📒Количество поинтов - " + str(points) + "\n⭐️Опыт: " + str(exp) + " / {0} \n📗Ваш уровень - " + str(lvl) + "\n◻️Ваш реферер: " + str(ref) + "\n          /myrefs              /giveaway"
         profilemsg = bot.reply_to(m, stats.format(str(needexp)))
     
     
@@ -325,170 +410,32 @@ def shop(m):
                          charset='utf8mb4',
                          cursorclass=pymysql.cursors.DictCursor)
     with db.cursor() as cursor:
-        sql = "SELECT `lvl` FROM `users` WHERE `user_id` = %s"
+        sql = "SELECT * FROM `users` WHERE `user_id` = %s"
         cursor.execute(sql, (m.from_user.id))
         result = cursor.fetchone()
         lvl = int(result['lvl'])
+        atk = int(result['atk'])
+        hp = int(result['hp'])
+        fatk = int(result['fatk'])
+        creet = int(result['creet'])
+        krazha = int(result['krazha'])
         db.close()
     if lvl >= 3 :
         pass
     else:
         bot.reply_to(m, "Магазин откроется на 3 уровне.")
         return
-    bot.reply_to(m, "Добро пожаловать в магазин. Список предметов для покупки ниже. \nЧтобы купить предмет, нужно воспользоваться командой /buy id предмета:количество. Удачных покупок.")
-    text = "Магазин: \n Название - ID - стоимость. \n+1💢 ед.атаки - 1ID - 20points \n+1❤️ ед. здоровья - 2ID - 20points \n+1% 🦀шанс первой атаки - 3ID - 30points \n+1% 💥шанс крита - 4ID - 50points \n 🔴Смена никнейма - 5ID - 500 points"
-    bot.reply_to(m, text)
-
-
-
-@bot.message_handler(commands=['buy'])
-def buy(m):
-    db = pymysql.connect(host='localhost',
-                         user='root',
-                         password='maz1aan16v',                             
-                         db='Megumin',
-                         charset='utf8mb4',
-                         cursorclass=pymysql.cursors.DictCursor)
-    with db.cursor() as cursor:
-        sql = "SELECT `lvl` FROM `users` WHERE `user_id` = %s"
-        cursor.execute(sql, (m.from_user.id))
-        result = cursor.fetchone()
-        lvl = int(result['lvl'])
-        db.close()
-    if lvl >= 3 :
-        pass
+    needAtk = int(10 * ((atk - 19) / 6))
+    needHp = int(10 * ((hp - 19) / 6))
+    needFatk = int(15 * ((fatk - 9) / 6))
+    needCreet = int(20 * ((creet - 4) / 3))
+    if krazha >= 1:
+        textKrazha = "Навык кражи"
+        needKrazha = int(krazha * 150)
     else:
-        bot.reply_to(m, "Магазин откроется на 3 уровне.")
-        return
-    if len(m.text.split(' ')) > 1:
-        item = m.text.replace('/buy ', '', 1).split(':')
-        if int(item[0]) == 1:
-            sum = int(item[1]) * 20
-            count = int(item[1])
-            db = pymysql.connect(host='localhost',
-                         user='root',
-                         password='maz1aan16v',                             
-                         db='Megumin',
-                         charset='utf8mb4',
-                         cursorclass=pymysql.cursors.DictCursor)
-            with db.cursor() as cursor:
-                sql = "SELECT `points` FROM `users` WHERE `user_id` = %s"
-                cursor.execute(sql, (m.from_user.id))
-                result = cursor.fetchone()
-                balance = result['points']
-                if int(balance) >= int(sum):
-                    sql = "UPDATE `users` SET `points` = points - %s WHERE user_id = %s"
-                    cursor.execute(sql, (sum, m.from_user.id))
-                    db.commit()
-                    sql = "UPDATE `users` SET `atk` = atk + %s WHERE user_id = %s"
-                    cursor.execute(sql, (count, m.from_user.id))
-                    db.commit()
-                    db.close()
-                    bot.reply_to(m, "Покупка успешна. Вам добавлено {0} очков атаки💢 за {1} поинтов.".format(str(count),str(sum)))
-                else:
-                    bot.reply_to(m, "Недостаточно поинтов") 
-        if int(item[0]) == 2:
-            sum = int(item[1]) * 20
-            count = int(item[1])
-            db = pymysql.connect(host='localhost',
-                         user='root',
-                         password='maz1aan16v',                             
-                         db='Megumin',
-                         charset='utf8mb4',
-                         cursorclass=pymysql.cursors.DictCursor)
-            with db.cursor() as cursor:
-                sql = "SELECT `points` FROM `users` WHERE `user_id` = %s"
-                cursor.execute(sql, (m.from_user.id))
-                result = cursor.fetchone()
-                balance = result['points']
-                if int(balance) >= int(sum):
-                    sql = "UPDATE `users` SET `points` = points - %s WHERE user_id = %s"
-                    cursor.execute(sql, (sum, m.from_user.id))
-                    db.commit()
-                    sql = "UPDATE `users` SET `hp` = hp + %s WHERE user_id = %s"
-                    cursor.execute(sql, (count, m.from_user.id))
-                    db.commit()
-                    db.close()
-                    bot.reply_to(m, "Покупка успешна. Вам добавлено {0} очков здоровья❤️ за {1} поинтов.".format(str(count),str(sum)))
-                else:
-                    bot.reply_to(m, "Недостаточно поинтов")
-        if int(item[0]) == 3:
-            sum = int(item[1]) * 30
-            count = int(item[1])
-            db = pymysql.connect(host='localhost',
-                         user='root',
-                         password='maz1aan16v',                             
-                         db='Megumin',
-                         charset='utf8mb4',
-                         cursorclass=pymysql.cursors.DictCursor)
-            with db.cursor() as cursor:
-                sql = "SELECT `points` FROM `users` WHERE `user_id` = %s"
-                cursor.execute(sql, (m.from_user.id))
-                result = cursor.fetchone()
-                balance = result['points']
-                if int(balance) >= int(sum):
-                    sql = "UPDATE `users` SET `points` = points - %s WHERE user_id = %s"
-                    cursor.execute(sql, (sum, m.from_user.id))
-                    db.commit()
-                    sql = "UPDATE `users` SET `fatk` = fatk + %s WHERE user_id = %s"
-                    cursor.execute(sql, (count, m.from_user.id))
-                    db.commit()
-                    db.close()
-                    bot.reply_to(m, "Покупка успешна. Вам добавлено {0} % шанс на первую атаку🦀 за {1} поинтов.".format(str(count),str(sum)))
-                else:
-                    bot.reply_to(m, "Недостаточно поинтов") 
-        if int(item[0]) == 4:
-            sum = int(item[1]) * 50
-            count = int(item[1])
-            db = pymysql.connect(host='localhost',
-                         user='root',
-                         password='maz1aan16v',                             
-                         db='Megumin',
-                         charset='utf8mb4',
-                         cursorclass=pymysql.cursors.DictCursor)
-            with db.cursor() as cursor:
-                sql = "SELECT `points` FROM `users` WHERE `user_id` = %s"
-                cursor.execute(sql, (m.from_user.id))
-                result = cursor.fetchone()
-                balance = result['points']
-                if int(balance) >= int(sum):
-                    sql = "UPDATE `users` SET `points` = points - %s WHERE user_id = %s"
-                    cursor.execute(sql, (sum, m.from_user.id))
-                    db.commit()
-                    sql = "UPDATE `users` SET `creet` = creet + %s WHERE user_id = %s"
-                    cursor.execute(sql, (count, m.from_user.id))
-                    db.commit()
-                    db.close()
-                    bot.reply_to(m, "Покупка успешна. Вам добавлено {0} % шанс на крит💥 за {1} поинтов.".format(str(count),str(sum)))
-                else:
-                    bot.reply_to(m, "Недостаточно поинтов") 
-        if int(item[0]) == 5:
-            sum = int(item[1]) * 500
-            db = pymysql.connect(host='localhost',
-                         user='root',
-                         password='maz1aan16v',                             
-                         db='Megumin',
-                         charset='utf8mb4',
-                         cursorclass=pymysql.cursors.DictCursor)
-            with db.cursor() as cursor:
-                sql = "SELECT `points` FROM `users` WHERE `user_id` = %s"
-                cursor.execute(sql, (m.from_user.id))
-                result = cursor.fetchone()
-                balance = result['points']
-                if int(balance) >= int(sum):
-                    sql = "UPDATE `users` SET `points` = points - %s WHERE user_id = %s"
-                    cursor.execute(sql, (sum, m.from_user.id))
-                    db.commit()
-                    sql = "UPDATE `users` SET `username` = 'None' WHERE user_id = %s"
-                    cursor.execute(sql, (m.from_user.id))
-                    db.commit()
-                    db.close()
-                    bot.reply_to(m, "Покупка успешна. Теперь вы можете сменить никнейм, введя команду /changenick .")
-                else:
-                    bot.reply_to(m, "Недостаточно поинтов") 
-    else:
-        bot.reply_to(m, "Используйте /shop")
-        
+        textKrazha = "Способность кражи"
+        needKrazha = 100
+    bot.reply_to(m, "Магазин: \n Команда - описание - стоимость. \n💢/buy_atk - +1 ед.атаки - {0} pts \n❤️/buy_hp +1 ед. здоровья - {1} pts \n🦀/buy_fatk - +1% шанс первой атаки - {2} pts \n💥/buy_crt - +1% шанс крита - {3} pts\n🔴/buy_nick - Смена никнейма - 500 pts \n🤛/buy_krazha - {4} - {5} pts ".format(str(needAtk), str(needHp), str(needFatk), str(needCreet), str(textKrazha), str(needKrazha)))
 
 
 
@@ -518,7 +465,7 @@ def changeNick(m):
             db.close()
             return
     if len(m.text.split(' ')) > 1:
-        nick = m.text.replace('/changenick ', '', 1)
+        nick = m.text.replace('/changenick ', '', 1).replace('@ne_dlt_bot', '', 1)
         db = pymysql.connect(host='localhost',
                          user='root',
                          password='maz1aan16v',                             
@@ -555,13 +502,29 @@ def nextLoc(m):
         result = cursor.fetchone()
         location = int(result['local'])
         lvl = int(result['lvl'])
-        if (location == 1) and (lvl >= 6):
+        if (location == 1) and (lvl >= 5):
             go = bot.reply_to(m, "Переходим в локацию ''Таксопарк''... Это займет некоторое время...")
             time.sleep(5)
             sql = "UPDATE `users` SET `local` = 2 WHERE `user_id` = %s"
             cursor.execute(sql, (m.from_user.id))
             db.commit()
             complete = "Вы успешно перешли в локацию ''таксопарк''."
+            bot.edit_message_text(complete, go.chat.id, go.message_id)
+        elif (location == 2) and (lvl >= 7):
+            go = bot.reply_to(m, "Переходим в локацию ''Dungeon''... Это займет некоторое время...")
+            time.sleep(5)
+            sql = "UPDATE `users` SET `local` = 3 WHERE `user_id` = %s"
+            cursor.execute(sql, (m.from_user.id))
+            db.commit()
+            complete = "Вы успешно перешли в локацию ''Dungeon''."
+            bot.edit_message_text(complete, go.chat.id, go.message_id)
+        elif (location == 3) and (lvl >= 8):
+            go = bot.reply_to(m, "Переходим в локацию ''Мэрия''... Это займет некоторое время...")
+            time.sleep(5)
+            sql = "UPDATE `users` SET `local` = 4 WHERE `user_id` = %s"
+            cursor.execute(sql, (m.from_user.id))
+            db.commit()
+            complete = "Вы успешно перешли в локацию ''Мэрия''."
             bot.edit_message_text(complete, go.chat.id, go.message_id)
         else:
             bot.reply_to(m, "Сначала закончите свои дела в этой локации!")

@@ -47,7 +47,7 @@ def putdigrecord(id,w,p,a):
  
 timesleepdig = 0
 
-def dig(id,player,playerid,meesa):
+def dig(id,playerid,meesa):
     record=getdigrecord(id)
     nump=random.randint(0,len(digp)-1)
     numt=random.randint(0,len(digt)-1)
@@ -67,9 +67,15 @@ def dig(id,player,playerid,meesa):
                          charset='utf8mb4',
                          cursorclass=pymysql.cursors.DictCursor)
     with db.cursor() as cursor:
-        sql = "SELECT `lvl` FROM `users` WHERE user_id = %s"
+        sql = "SELECT `lvl`, `username` FROM `users` WHERE user_id = %s"
         cursor.execute(sql, (playerid))
         result = cursor.fetchone()
+        player = result['username']
+        if player:
+            pass
+        else:
+            bot.reply_to(m, "Зарегистрируйтесь, введя команду !профиль")
+            return
         lvl = int(result['lvl'])
     if (lvl >= 3) :
         bot.send_message(id, "Взрывы доступны до третьего уровня.")
@@ -89,7 +95,7 @@ def dig(id,player,playerid,meesa):
         pass
     #bot.send_message(id,"Вы начали раскопки *{0}* и усиленно роете лопатами, экскаватором... Вам кажется что ваш совочек ударился обо что-то твердое. Може это клад?!".format(digp[nump]), None, None, None,'markdown')
     if random.randint(0,1) :
-        if (freepoint<45) and (id == chancechat):
+        if (freepoint<70) and (id == chancechat):
             randompoint = random.randint(2, 6)
             db = pymysql.connect(host='localhost',
                          user='root',
@@ -110,7 +116,7 @@ def dig(id,player,playerid,meesa):
                 result = cursor.fetchone()
             db.close()
             needexp = int(result['lvl']) * 100
-            plustats = int(needexp) / 5
+            plustats = int(needexp) / 50
             if (int(result['exp']) >= needexp):
                 ex2p = 0
                 db = pymysql.connect(host='localhost',
@@ -147,7 +153,7 @@ def dig(id,player,playerid,meesa):
                             db.close()
                             return
                         except:
-                            bot.send_message(id, "Не смогли начислить реферальные очки @" + str(isref['ref']))
+                            bot.send_message(id, "Не смогли начислить реферальные очки " + str(isref['ref']))
                             db.close()
                             return
                     else:
@@ -174,7 +180,7 @@ def dig(id,player,playerid,meesa):
                     cursor.execute(sql, (playerid))
                     result = cursor.fetchone()
                     needexp = int(result['lvl']) * 100
-                    plustats = int(needexp) / 5
+                    plustats = int(needexp) / 50
                     if (int(result['exp']) >= needexp):
                         ex2p = 0
                         sql = "UPDATE `users` SET `exp` = %s WHERE user_id = %s"

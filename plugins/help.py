@@ -47,19 +47,22 @@ def megacom(m):
                          charset='utf8mb4',
                          cursorclass=pymysql.cursors.DictCursor)
     with db.cursor() as cursor:
-        sql = "SELECT lvl FROM `users` WHERE `user_id` = '" + str(m.from_user.id) + "'"
+        sql = "SELECT lvl, local FROM `users` WHERE `user_id` = '" + str(m.from_user.id) + "'"
         cursor.execute(sql)
         result = cursor.fetchone()
         lvl = int(result['lvl'])
+        local = int(result['local'])
         db.close()
     if lvl >= 1:
         text = "\nУровень 1: \n Взрыв! \n Лучший! \n !профиль \n /giveaway"
     if lvl >= 2 :
         text += "\nУровень 2: \n /mystery \n !рулетка"
     if lvl >= 3 :
-        text += "\nУровень 3: \n /shop \n /buy \n !битва \n Обновленный !профиль \n Взрыв! - недоступен"
+        text += "\nУровень 3: \n /shop \n !битва \n Обновленный !профиль \n Взрыв! - недоступен"
     if lvl >= 4 :
         text += "\nУровень 4: \n !битва (мультиплеер, отправлять команду ответом своему противнику)"
+    if (lvl == 7) and (local == 3):
+        text += "\nУровень 7: \n/wrestling"
     bot.reply_to(m, 'Мегумин, v.' + __version__ + '\n Команды: ' + text)
 	
 @bot.message_handler(commands=['ownsetpoints'])
@@ -124,23 +127,7 @@ def report(m):
     else:
         bot.reply_to(m, 'Данная команда позволяет сообщить разработчикам о найденом баге или же о предложении по улучшению бота. Вводи /report и текст')
 #
-@bot.message_handler(commands=['donate'])
-def donate(m):
-    donatecom = random.randrange(1000, 10000, 1)
-    if len(m.text.split(' ')) > 1:
-        sumdonate = m.text.replace('/donate ', '', 1)
-        sumdonate1 = int(sumdonate)
-        print(sumdonate1)
-        er = int('3')
-        pointsgiven = int(sumdonate1) * int(er)
-        print(pointsgiven)
-        text = 'Сгенерирована информация. \nВы получите ' 
-        text2 = ' поинтов. \nРеквизиты: \nQIWI: 380662357576 \nНеобходимо отправить '
-        text3 = 'руб \nСообщение с информацией о донате уже передано разработчику, он проверит платеж как только сможет'
-        bot.reply_to(m, text + str(pointsgiven) + text2 + str(sumdonate) + text3)
-        bot.forward_message(owner, m.chat.id, m.message_id)
-    else:
-        bot.reply_to(m, 'Донаты принимаются на QIWI в ручном режиме. 1 рубль = 3 поинтам. Информация о донатере поступит разработчику и будет обработана в ближайшее время. Для доната введите /donate сумма в рублях, например /donate 10 (пополнение на 10 рублей)' )
+
      
 
 	
@@ -157,15 +144,7 @@ def bot_ban(m):
 				pass
 		
  
-@bot.message_handler(commands=['notif'])
-def notif(m):
-    text = 'И снова я в строю! Кто пропустил, напомню - если бы не некоторые люди, всех ботов накрыли бы 31.07.'
-    text += ' Я очень благодарна, а так же мой разработчик - за то, что помогли нам выбраться из этой ситуации.'
-    text += ' Список людей, что нас поддержали: \n@rikolnice\n@anan1116\n@MorozRuss777\nСпасибо вам всем! Скоро придумаю для вас какой-то интересный подарок в этом чате <3'
-    bot.send_message(chancechat, text)
- 
-		
-		
+
 
 @bot.message_handler(commands=["getuser"])
 def answer(message):
@@ -174,8 +153,16 @@ def answer(message):
         UsrInfo = bot.get_chat_member(userid, userid).user
         bot.reply_to(message, "Id: " + str(UsrInfo.id) + "\nFirst Name: " + str(UsrInfo.first_name) + "\nLast Name: " + str(UsrInfo.last_name) + "\nUsername: @" + str(UsrInfo.username))
 
+@bot.message_handler(commands=["reboot"])
+def rebootBot(message):
+    if str(message.from_user.id) in owner:
+        bot.reply_to(message, "Restarted")
+        os.system("service megumin restart")
+    else:
+        return
 
-		
+
+
 		
 @bot.message_handler(commands=['rp'])
 def reply(m):
