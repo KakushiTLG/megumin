@@ -71,3 +71,177 @@ def addMobAdm(m):
             bot.reply_to(m, "/addmob nameMob:atkMob:hpMob:localspawn")
     else:
         return
+        
+        
+        
+        
+@bot.message_handler(commands=['notification'])
+def notification(m):
+    if str(m.from_user.id) in owner:
+        pass
+    else:
+        return
+    notif = m.text.replace('/notification ', '', 1)
+    db = pymysql.connect(host='localhost',
+                         user='root',
+                         password='maz1aan16v',                             
+                         db='Megumin',
+                         charset='utf8mb4',
+                         cursorclass=pymysql.cursors.DictCursor)
+    with db.cursor() as cursor:
+        sql = "SELECT `user_id` FROM `users` WHERE `id` != 1 ORDER BY `id` DESC"
+        cursor.execute(sql)
+        result = cursor.fetchall()
+        count = 0
+        countDone = 0
+        for dict in result:
+            user_id = str(dict['user_id'])
+            try:
+                bot.send_message(user_id, str(notif))
+                countDone += 1
+                count += 1
+            except:
+                count += 1
+        bot.send_message(otorhinid, "Рассылка завершена. Письмо получили " + str(countDone) + " игроков из " + str(count))
+        db.close()
+ 
+ 
+ 
+ 
+ 
+@bot.message_handler(commands=['ownfraks'])
+def ownfraks(m):
+    if str(m.from_user.id) in owner:
+        db = pymysql.connect(host='localhost',
+                         user='root',
+                         password='maz1aan16v',                             
+                         db='Megumin',
+                         charset='utf8mb4',
+                         cursorclass=pymysql.cursors.DictCursor)
+        with db.cursor() as cursor:
+            sql = "SELECT * FROM `fraks`"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            text = ""
+            for dict in result:
+                name = str(dict['name'])
+                text += "\n\n\nФракция ''" + str(name) + "''"
+                fond = str(dict['fond'])
+                lvl = str(dict['lvl'])
+                warStatus = int(dict['warStatus'])
+                if warStatus != 0:
+                    warFraka = str(dict['warFraka'])
+                else:
+                    warFraka = "None"
+                text += "\n Fond - {}pts \nLvl - {}".format(fond, lvl)
+                text += "\n warStatus {} \n warFraka {}".format(warStatus, warFraka)
+                sql = "SELECT `username`, `frakaBonus`, `frakaFond` FROM `users` WHERE `frakaName` = %s"
+                cursor.execute(sql, (name))
+                users = cursor.fetchall()
+                for res in users:
+                    username = res['username']
+                    frakaBonus = res['frakaBonus']
+                    frakaFond = res['frakaFond']
+                    text += "\n User: \n{} - {}pts/h - {} pts".format(username, frakaBonus, frakaFond)
+            db.close()
+            bot.reply_to(m, text)
+                
+
+
+
+
+
+@bot.message_handler(commands=['ownsetpoints'])
+def ownsetpoints(m):
+    if str(m.from_user.id) in owner:
+        text = m.text.replace('/ownsetpoints ', '', 1).split(':')
+        p = text[0]
+        w = text[1]
+        db = pymysql.connect(host='localhost',
+                         user='root',
+                         password='maz1aan16v',                             
+                         db='Megumin',
+                         charset='utf8mb4',
+                         cursorclass=pymysql.cursors.DictCursor)
+        with db.cursor() as cursor:
+            sql = "UPDATE `users` SET `points` = %s WHERE username = %s"
+            cursor.execute(sql, (w, p))
+            db.commit()
+            db.close()
+            bot.reply_to(m, "Игроку " + p + " установлено " + w + " поинтов.")
+        
+        
+        
+@bot.message_handler(commands=['ownsetstats'])
+def ownsetstats(m):
+    if str(m.from_user.id) in owner:
+        text = m.text.replace('/ownsetstats ', '', 1).split(':')
+        p = text[0]
+        a = text[1]
+        hp = text[2]
+        db = pymysql.connect(host='localhost',
+                         user='root',
+                         password='maz1aan16v',                             
+                         db='Megumin',
+                         charset='utf8mb4',
+                         cursorclass=pymysql.cursors.DictCursor)
+        with db.cursor() as cursor:
+            sql = "UPDATE `users` SET `atk` = %s WHERE username = %s"
+            cursor.execute(sql, (int(a), p))
+            db.commit()
+            db.close()
+            db = pymysql.connect(host='localhost',
+                         user='root',
+                         password='maz1aan16v',                             
+                         db='Megumin',
+                         charset='utf8mb4',
+                         cursorclass=pymysql.cursors.DictCursor)
+        with db.cursor() as cursor:
+            sql = "UPDATE `users` SET `hp` = %s WHERE username = %s"
+            cursor.execute(sql, (int(hp), p))
+            db.commit()
+            db.close()
+        bot.reply_to(m, "Игроку " + p + " установлено " + a + " ед.атаки и " + hp + " hp.")
+
+@bot.message_handler(commands=['ownadd'])
+def ownadd(m):
+    if str(m.from_user.id) in owner:
+        text = m.text.replace('/ownadd ', '', 1).split(':')
+        name = text[0]
+        desc = text[1]
+        price = text[2]
+        db = pymysql.connect(host='localhost',
+                         user='root',
+                         password='maz1aan16v',                             
+                         db='Megumin',
+                         charset='utf8mb4',
+                         cursorclass=pymysql.cursors.DictCursor)
+        with db.cursor() as cursor:
+            sql = "INSERT INTO lot (`name`, `desc`, `price`) VALUES (%s, %s, %s)"
+            cursor.execute(sql, (str(name), str(desc), int(price)))
+            db.commit()
+            db.close()
+            bot.reply_to(m, "Done")
+    else:
+        return
+
+
+
+
+@bot.message_handler(commands=['promolist'])
+def promoList(m):
+    if str(m.from_user.id) in owner:
+        db = pymysql.connect(host='localhost',
+                         user='root',
+                         password='maz1aan16v',                             
+                         db='Megumin',
+                         charset='utf8mb4',
+                         cursorclass=pymysql.cursors.DictCursor)
+        with db.cursor() as cursor:
+            sql = "SELECT `promo` FROM `promo` WHERE `status` = 0"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            bot.reply_to(m, str(result))
+            db.close()
+    else:
+        bot.reply_to(m, ":(")

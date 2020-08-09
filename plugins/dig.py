@@ -18,17 +18,17 @@ mdir='mquotes'
 	
 def getdigrecord(id):
     try:
-        f=open(qdir+'\quotes{0}digr.txt'.format(id),encoding='utf-8')
+        f=open(qdir+'\quotesdigr.txt',encoding='utf-8')
         rec=f.read().splitlines()
         f.close()
         maxweight=int(rec[0])
         recname=rec[1]
         recart=rec[2]
     except:
-        f=open(qdir+'\quotes{0}digr.txt'.format(id),'w',encoding='utf-8')
-        f.write(u'\n'.join(['0','Мегумин','Лучший взрыв']))
+        f=open(qdir+'\quotesdigr.txt','w',encoding='utf-8')
+        f.write(u'\n'.join(['0','Kotomi','Лучший взрыв']))
         f.close()        
-        recname="Мегумин"
+        recname="Kotomi"
         maxweight=0
         recart="Лучший взрыв"
     return [maxweight,recname,recart]
@@ -39,7 +39,7 @@ def trophy(id):
     
 def putdigrecord(id,w,p,a):
     try:
-        f=open(qdir+'\quotes{0}digr.txt'.format(id),'w',encoding='utf-8')
+        f=open(qdir+'\quotesdigr.txt','w',encoding='utf-8')
         f.write(u'\n'.join([str(w),str(p),str(a)]))
         f.close()   
     except:
@@ -56,8 +56,8 @@ def dig(id,playerid,meesa):
     megaro = random.randint(0,100)
     timebanbot = math.ceil(time.time()) + 60
     freepoint = random.randint(0,100)
-    exprec = random.randint(2,15)
-    randomexp = random.randint(2, 8)
+    exprec = random.randint(2,5)
+    randomexp = random.randint(1, 3)
     randomdig = random.randint(0, 300)
     global timesleepdig
     db = pymysql.connect(host='localhost',
@@ -67,35 +67,34 @@ def dig(id,playerid,meesa):
                          charset='utf8mb4',
                          cursorclass=pymysql.cursors.DictCursor)
     with db.cursor() as cursor:
-        sql = "SELECT `lvl`, `username` FROM `users` WHERE user_id = %s"
+        sql = "SELECT * FROM `users` WHERE user_id = %s"
         cursor.execute(sql, (playerid))
         result = cursor.fetchone()
         player = result['username']
         if player:
             pass
         else:
-            bot.reply_to(m, "Зарегистрируйтесь, введя команду !профиль")
+            bot.send_message(id, "Зарегистрируйтесь, введя команду !профиль")
             return
-        lvl = int(result['lvl'])
-    if (lvl >= 3) :
-        bot.send_message(id, "Взрывы доступны до третьего уровня.")
-        return
-    else:
-        pass
+
+        if result['nowhp'] < result['hp']:
+            bot.send_message(id, "Твоя мана еще не восстановлена. Отдохни.")
+            return
+
     if int(timesleepdig) < math.ceil(time.time()): 
         pass
     else:
         dig = bot.send_message(id, "Оглянувшись по сторонам,*@{0}* не нашел что можно взорвать.".format(player), None, None, None,'markdown')
         return
     if (randomdig == 1) :
-        botdig = bot.send_message(id,"Неправильно произнеся заклинание, *{0}* призвал *Мегумин*, которая взорвала 💥*ВСЕ ВОКРУГ*💥! Восстановление после таких погромов займет около часа".format(player), None, None, None,'markdown')
+        botdig = bot.send_message(id,"Неправильно произнеся заклинание, *{0}* призвал *Kotomi*, которая взорвала 💥*ВСЕ ВОКРУГ*💥! Восстановление после таких погромов займет около часа".format(player), None, None, None,'markdown')
         timesleepdig = math.ceil(time.time()) + 3600
         return
     else:
         pass
     #bot.send_message(id,"Вы начали раскопки *{0}* и усиленно роете лопатами, экскаватором... Вам кажется что ваш совочек ударился обо что-то твердое. Може это клад?!".format(digp[nump]), None, None, None,'markdown')
     if random.randint(0,1) :
-        if (freepoint<70) and (id == chancechat):
+        if freepoint < 70:
             randompoint = random.randint(2, 6)
             db = pymysql.connect(host='localhost',
                          user='root',
@@ -106,7 +105,6 @@ def dig(id,playerid,meesa):
             with db.cursor() as cursor:
                 sql = "UPDATE `users` SET `points` = points + %s WHERE user_id = %s"
                 cursor.execute(sql, (int(randompoint), playerid))
-                db.commit()
                 sql = "UPDATE `users` SET `exp` = exp + %s WHERE user_id = %s"
                 cursor.execute(sql, (int(randomexp), playerid))
                 db.commit()
@@ -139,7 +137,7 @@ def dig(id,playerid,meesa):
                     sql = "SELECT `ref` FROM `users` WHERE user_id = %s"
                     cursor.execute(sql, (str(playerid)))
                     isref = cursor.fetchone()
-                    if isref:
+                    if isref != None:
                         try:
                             refer = isref['ref']
                             sql = "SELECT `lvl` FROM `users` WHERE username = %s"
@@ -163,9 +161,11 @@ def dig(id,playerid,meesa):
             botdig = bot.send_message(id,"Начав использовать заклинание *{0}* , *{1}*  только что взорвал *{2}*, сила взрыва - *{3}*!".format(digp[nump],player,digt[numt],weight), None, None, None,'markdown')
         if weight>int(record[0]):
             putdigrecord(id,weight,player,digt[numt])
-            botdig = bot.send_message(id,"*Ого!!! Это новый рекорд! Похоже ты сильнейший волшебник здесь, после меня конечно же, {0}. Напиши лучший! чтобы это увидеть!*\nПолучено {1} опыта".format(player, str(exprec)), None, None, None,'markdown')
+            botdig = bot.send_message(id,"*Ого!!! Это новый рекорд! Похоже ты сильнейший волшебник здесь, после Мегумин, конечно же, {0}. Напиши лучший! чтобы это увидеть!*\nПолучено {1} опыта".format(player, str(exprec)), None, None, None,'markdown')
             bot.send_video(id, open('./media/best.mp4', 'rb'))
-            if (id == chancechat):
+            botrecord = bot.send_message(chancechat, "*{}* стал лучшим архимагом, взорвав *{}* с силой взрыва *{}*".format(player, digt[numt], str(weight)), None, None, None,'markdown')
+            q = 1
+            if q:
                 db = pymysql.connect(host='localhost',
                              user='root',
                              password='maz1aan16v',                             
@@ -196,7 +196,7 @@ def dig(id,playerid,meesa):
                         sql = "SELECT `ref` FROM `users` WHERE user_id = %s"
                         cursor.execute(sql, (str(playerid)))
                         isref = cursor.fetchone()
-                        if isref:
+                        if isref != None:
                             try:
                                 refer = isref['ref']
                                 sql = "SELECT `lvl` FROM `users` WHERE username = %s"
@@ -222,8 +222,18 @@ def dig(id,playerid,meesa):
         if str(playerid) in donators:
             if (megaro <=10):
                 try:
-                    bot.restrict_chat_member(id, playerid, timebanbot, False)
-                    botdig = bot.send_message(id, " *{0}*, я видела галочку в твоем профиле, но твое везение на этом кончено. Лишаю тебя голоса на минуту!".format(player), None, None, None, 'markdown')
+                    db = pymysql.connect(host='localhost',
+                         user='root',
+                         password='maz1aan16v',                             
+                         db='Megumin',
+                         charset='utf8mb4',
+                         cursorclass=pymysql.cursors.DictCursor)
+                    with db.cursor() as cursor:
+                        sql = "UPDATE `users` SET `nowhp` = 0 WHERE user_id = %s"
+                        cursor.execute(sql, playerid)
+                        db.commit()
+                        db.close()
+                    botdig = bot.send_message(id, " *{0}*, я видела галочку в твоем профиле, но Мегумин сказала, что твоё везение на этом кончено. Ты слишком неправильно произносишь заклинание. Попробуй позже.".format(player), None, None, None, 'markdown')
                     bot.send_video(id, open('./media/ololo.mp4', 'rb'))
                     return
                 except:
@@ -234,8 +244,18 @@ def dig(id,playerid,meesa):
                 return
         if (megaro <= 30):
             try:
-                bot.restrict_chat_member(id, playerid, timebanbot, False)
-                botdig = bot.send_message(id, "Кажется *{0}* неправильно произнес заклинание и лишил себя голоса на минуту.".format(player), None, None, None, 'markdown')
+                db = pymysql.connect(host='localhost',
+                         user='root',
+                         password='maz1aan16v',                             
+                         db='Megumin',
+                         charset='utf8mb4',
+                         cursorclass=pymysql.cursors.DictCursor)
+                with db.cursor() as cursor:
+                    sql = "UPDATE `users` SET `nowhp` = 0 WHERE user_id = %s"
+                    cursor.execute(sql, playerid)
+                    db.commit()
+                    db.close()
+                botdig = bot.send_message(id, "Кажется *{0}* лишил себя всей маны... Надо бы осторожнее с этим..".format(player), None, None, None, 'markdown')
                 bot.send_video(id, open('./media/ololo.mp4', 'rb'))
             except:
                 botdig = bot.send_message(id,"Начиная использовать заклинание *{0}*, *{1}*, вы ничего не взорвали! Но *{2}*. Может, попробуешь еще раз?".format(digp[nump],player,dige[nume]), None, None, None,'markdown')

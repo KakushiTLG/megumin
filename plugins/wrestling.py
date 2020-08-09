@@ -1,11 +1,10 @@
 import threading
-eventTitles = ["быкануть на администратора", "спрыгнуть с Чиллиада", "поймать бизнес Майорова", "подать объявление в /adv", "стать лидером фракции", "оплатить дом в банке", "купить туризмо у Линка", "узнать, когда закончится срок Саска", "устроить РП", "провести Character Kill", "слетать в деморган на вертолёте", "убить Мегумин"]
-enemyMobsName = [" таксист из гетто", " первый лидер ФБР", " багоюзер", " обладатель НонРп ника", " лидер мафии", " улетевший на вертолете из деморгана читер", " гражданский вертолетчик", " подозрительный человек, представившийся как пожилой арангутан", " англичанин", "и разработчики", " арестованный у притона бандит", " полицейский в костюме медика", "о обновление Chance", "а Анна Антипова", " турист с АК-47", " Винтер Фокс", " шелдонлёт", " водитель автобуса", "а Ваша шизофрения", "а Мегумин"]
+eventTitles = ["быкануть на администратора", "спрыгнуть с Чиллиада", "поймать бизнес Майорова", "подать объявление в /adv", "стать лидером фракции", "оплатить дом в банке", "купить туризмо у Линка", "узнать, когда закончится срок Саска", "устроить РП", "провести Character Kill", "слетать в деморган на вертолёте", "убить Kotomi"]
+enemyMobsName = [" таксист из гетто", " первый лидер ФБР", " багоюзер", " обладатель НонРп ника", " лидер мафии", " улетевший на вертолете из деморгана читер", " гражданский вертолетчик", " подозрительный человек, представившийся как пожилой арангутан", " англичанин", "и разработчики", " арестованный у притона бандит", " полицейский в костюме медика", "о обновление Chance", "а Анна Антипова", " турист с АК-47", " Винтер Фокс", " шелдонлёт", " водитель автобуса", "а Ваша шизофрения", "а Kotomi"]
 battleTitles = ["сказав, что вызывает ментов", "попросив вас написать /q", "предлагая вам деньги", "явно со злыми намерениями посмотрев на вас", "предлагая отойти за угол", "спрашивая, что такое МГ", "используя пауэр гейминг", "демонстрируя техники из Наруто", "приглашая через /d перевестись в ФБР", "вызывая на гачи-борьбу", "устанавливая вам постороннее ПО", "устроив кошмар в душевой LSPD", "собираясь отправить вас в бан", "кидая инвайт в LVA", "начав эпическое сражение", "предлагая оплатить налог на паспорт", "закидывая на мобилку 100к", "делающий подозрительный /time", "доставая ствол", "выбивающий налог на паспорт", "вводя вашу рефералку"]
 
 timesleep = 0
 pvpBattle = False
-@bot.message_handler(commands=['w'])
 def startWresling(message):
     global timesleep
     global pvpBattle
@@ -32,6 +31,7 @@ def startWresling(message):
             lvl = result['lvl']
             location = int(result['local'])
             player = result['username']
+            nowhp = result['nowhp']
             if player:
                 pass #это чето Линка
             else:
@@ -40,6 +40,11 @@ def startWresling(message):
             db.close()
         if int(lvl) < 3 :
             bot.reply_to(message, "У тебя нет третьего уровня для доступа к игре")
+            return
+        else:
+            pass
+        if int(nowhp) < int(playerHealth):
+            bot.reply_to(message, "Ты еще не до конца поправился. Пойди еще отдохни. \n У тебя {}/{} ❤️ здоровья".format(str(nowhp), str(playerHealth)))
             return
         else:
             pass
@@ -266,7 +271,7 @@ def battleResult(m, lvl, searchMob, critStrEnemy, pFA, critStr, randomFirstAttac
     pSA = str(pSA)
     eMSA = str(eMSA)
     mTrue = " "
-    winnerStr = "Победила Мегумин"
+    winnerStr = "Победила Kotomi"
     eM = enemyMob
     bT = battleTitle
     fA = randomFirstAttack
@@ -289,7 +294,7 @@ def battleResult(m, lvl, searchMob, critStrEnemy, pFA, critStr, randomFirstAttac
         bT = "с которым вы завязали битву"
     if winner == 0:
         if str(m.chat.id) == str(chancechat):
-            randPointr = random.randint(2, 5)
+            randPointr = random.randint(3, 6)
             randPoint = int(lvl) * randPointr
             
             winnerStr = "К счастью, победа на твоей стороне! Ты получаешь " + str(randPoint) + " поинтов."
@@ -316,7 +321,7 @@ def battleResult(m, lvl, searchMob, critStrEnemy, pFA, critStr, randomFirstAttac
                     sql = "SELECT `lvl` FROM `users` WHERE user_id = %s"
                     cursor.execute(sql, (m.from_user.id))
                     result = cursor.fetchone()
-                    randExp = random.randint(1, 3)
+                    randExp = random.randint(3, 6)
                     expgive_count = int(result['lvl']) * 0.5 * randExp
                     expgive = int(expgive_count)
                     db.commit()
@@ -360,7 +365,17 @@ def battleResult(m, lvl, searchMob, critStrEnemy, pFA, critStr, randomFirstAttac
             bot3_timeban = math.ceil(bot2_timeban)
             timebanbot = bot3_timeban + bot_timeban
             bot.restrict_chat_member(m.chat.id, m.from_user.id, timebanbot, False)            
-  
+            db = pymysql.connect(host='localhost',
+                             user='root',
+                             password='maz1aan16v',                             
+                             db='Megumin',
+                             charset='utf8mb4',
+                             cursorclass=pymysql.cursors.DictCursor)
+            with db.cursor() as cursor:
+                sql = "UPDATE `users` SET `nowhp` = 0 WHERE user_id = %s"
+                cursor.execute(sql, (m.from_user.id))
+                db.commit()
+                db.close()
             mTrue = " Отдохни пять минут, восстанови силы и возвращайся."
         except:
             mTrue = " Надо бы подлатать раны. Но, так как у тебя активирована аура восстановления, отдых тебе не нужен."
@@ -380,14 +395,24 @@ def battleResult(m, lvl, searchMob, critStrEnemy, pFA, critStr, randomFirstAttac
             bot3_timeban = math.ceil(bot2_timeban)
             timebanbot = bot3_timeban + bot_timeban
             bot.restrict_chat_member(m.chat.id, m.from_user.id, timebanbot, False)            
-  
+            db = pymysql.connect(host='localhost',
+                             user='root',
+                             password='maz1aan16v',                             
+                             db='Megumin',
+                             charset='utf8mb4',
+                             cursorclass=pymysql.cursors.DictCursor)
+            with db.cursor() as cursor:
+                sql = "UPDATE `users` SET `nowhp` = 0 WHERE user_id = %s"
+                cursor.execute(sql, (m.from_user.id))
+                db.commit()
+                db.close()
             mTrue = " Отдохни пять минут, восстанови силы и возвращайся."
         except:
             mTrue = "Но так как у тебя активирована аура выносливости, отдых тебе не нужен."
             return
     if winner == 6: #не ебу че это
         if str(m.chat.id) == str(chancechat):
-            randPointr = random.randint(1, 2)
+            randPointr = random.randint(1, 3)
             randPoint = int(lvl) * randPointr
             
             winnerStr = "К счастью, удача тебе улыбнулась и победа на твоей стороне! Ты получаешь " + str(randPoint) + " поинтов."
@@ -414,7 +439,7 @@ def battleResult(m, lvl, searchMob, critStrEnemy, pFA, critStr, randomFirstAttac
                     sql = "SELECT `lvl` FROM `users` WHERE user_id = %s"
                     cursor.execute(sql, (m.from_user.id))
                     result = cursor.fetchone()
-                    randExp = random.randint(1, 3)
+                    randExp = random.randint(2, 3)
                     expgive_count = int(result['lvl']) * 0.5 * randExp
                     expgive = int(expgive_count)
                     db.commit()

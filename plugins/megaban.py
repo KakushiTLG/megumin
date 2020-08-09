@@ -8,7 +8,7 @@ def megabanadm(m):
     bot_whoare = m.reply_to_message.from_user.id
     megagif = random.randrange(1, 5, 1)
     if(m.chat.id != m.from_user.id):
-        if(bot_whoami == 'administrator') or (bot_whoami == 'creator'):
+        if(bot_whoami == 'administrator') or (bot_whoami == 'creator') or (bot_whoami in owner):
 			#bot.reply_to(m, "Debug : " + str(bot_timeban))
             try:
                 bot.restrict_chat_member(m.chat.id, bot_whoare, timebanbot, False)

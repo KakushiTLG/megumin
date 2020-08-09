@@ -1,3 +1,5 @@
+import items
+import dogs
 @bot.message_handler(commands=['top'])
 def topLvl(m):
     db = pymysql.connect(host='localhost',
@@ -7,7 +9,7 @@ def topLvl(m):
                          charset='utf8mb4',
                          cursorclass=pymysql.cursors.DictCursor)
     with db.cursor() as cursor:
-        sql = "SELECT lvl, username FROM users ORDER BY lvl DESC Limit 3"
+        sql = "SELECT lvl, username FROM users ORDER BY lvl DESC Limit 5"
         cursor.execute(sql)
         result = cursor.fetchall()
         top = ""
@@ -20,12 +22,16 @@ def topLvl(m):
                 id = "🥈"
             elif count == 3:
                 id = "🥉"
+            elif count == 4:
+                id = "4⃣"
+            elif count == 5:
+                id = "5⃣"
             top += str(id) + str(dict['username']) + " - " + str(dict['lvl']) + ' lvl' + str(id) + '\n'
-            sql = "SELECT points, username FROM users ORDER BY points DESC Limit 3"
-            cursor.execute(sql)
-            pointres = cursor.fetchall()
-            topPoints = ""
-            countPoints = 0
+        sql = "SELECT points, username FROM users ORDER BY points DESC Limit 5"
+        cursor.execute(sql)
+        pointres = cursor.fetchall()
+        topPoints = ""
+        countPoints = 0
         for dict in pointres:
             countPoints += 1
             if countPoints == 1:
@@ -34,11 +40,35 @@ def topLvl(m):
                 idp = "🥈"
             elif countPoints == 3:
                 idp = "🥉"
+            elif countPoints == 4:
+                idp = "4⃣"
+            elif countPoints == 5:
+                idp = "5⃣"
             topPoints += str(idp) + str(dict['username']) + " - " + str(dict['points']) + ' points' + str(idp) + '\n'
-    db.close()
-    bot.reply_to(m, "ТОП игроков по уровню: \n" + str(top) + "\n \n ТОП игроков по поинтам:\n" + str(topPoints))
-    
+        sql = "SELECT tempPts, username FROM users ORDER BY tempPts DESC Limit 5"
+        cursor.execute(sql)
+        temppts = cursor.fetchall()
+        topPts = ""
+        countPts = 0
+        for dict in temppts:
+            countPts += 1
+            if countPts == 1:
+                idpts = "🥇"
+            elif countPts == 2:
+                idpts = "🥈"
+            elif countPts == 3:
+                idpts = "🥉"
+            elif countPts == 4:
+                idpts = "4⃣"
+            elif countPts == 5:
+                idpts = "5⃣"
+            topPts += str(idpts) + str(dict['username']) + " - " + str(dict['tempPts']) + '❄ \n'
         
+        
+        db.close()
+    bot.reply_to(m, "❄ТОП игроков по уровню❄\n" + str(top) + "\n \n❄ТОП игроков по поинтам❄\n" + str(topPoints) + "\n❄ТОП игроков по снежинкам❄\n" + str(topPts))
+    
+        #(fond * 0.3) + (lvl * 1.5) + (players * 0.5)
         
         
 @bot.message_handler(commands=['promo'])
@@ -101,7 +131,7 @@ def genPromo(m):
         cursor.execute(sql, (str(text)))
         db.commit()
         db.close()
-    gpromo = bot.send_message(chancechat, "Promo: \n*{}*".format(str(text)), None, None, None,'markdown')
+    gpromo = bot.send_message(chancechat, "❄Cold promo❄\n*{}*".format(str(text)), None, None, None,'markdown')
     bot.pin_chat_message(chancechat, gpromo.message_id)
 @bot.message_handler(commands=['createpromo'])
 def createPromo(m):
@@ -163,23 +193,9 @@ def referals(m):
         bot.reply_to(m, "Список ваших рефералов, " + str(refer) + ": \n" + str(referals))
     else:
         referals = 'У вас нет рефералов'
-@bot.message_handler(commands=['promolist'])
-def promoList(m):
-    if str(m.from_user.id) in owner:
-        db = pymysql.connect(host='localhost',
-                         user='root',
-                         password='maz1aan16v',                             
-                         db='Megumin',
-                         charset='utf8mb4',
-                         cursorclass=pymysql.cursors.DictCursor)
-        with db.cursor() as cursor:
-            sql = "SELECT `promo` FROM `promo` WHERE `status` = 0"
-            cursor.execute(sql)
-            result = cursor.fetchall()
-            bot.reply_to(m, str(result))
-            db.close()
-    else:
-        bot.reply_to(m, ":(")
+        
+        
+        
 @bot.message_handler(commands=['pay'])
 def pay(m):
     if len(m.text.split(' ')) > 1:
@@ -310,10 +326,31 @@ def profileBeta(m):
             local = int(result['local'])
             ref = result['ref']
             krazha = result['krazha']
+            nowhp = int(result['nowhp'])
+            frakaName = result['frakaName']
+            frakaStatus = int(result['frakaStatus'])
+            tempPts = int(result['tempPts'])
+            frakaBonus = int(result['frakaBonus'])
+            itemNow = int(result['item'])
+            itemn = items.item(itemNow)
+            bankNo = int(result['bankNo'])
+            bankInv = int(result['bankInv'])
+            if itemn:
+                pass
+            else:
+                itemn = "Ничего"
+            if frakaStatus == 3:
+                notif = "⚠️Вы были приглашены во фракцию " + str(frakaName) + "!\n Для принятия запроса - /f_accept .\n Для отказа - /f_cancel⚠️"
+            else:
+                notif = ""
             if ref:
                 ref = result['ref']
             else:
                 ref = 'Отсуствует'
+            if frakaBonus > 0:
+                frakabonus = str(frakaBonus) + "pts/h"
+            else:
+                frakabonus = "0"
         else:
             sql = "INSERT INTO users (username, user_id, lvl, points, atk, hp) VALUES (%s, %s, '1', '0', '25', '25')"
             cursor.execute(sql, (m.from_user.username, m.from_user.id))
@@ -323,20 +360,25 @@ def profileBeta(m):
             username = m.from_user.username
             lvl = int('1')
             points = int('0')
-            atk = 0
-            hp = 0
+            atk = 12
+            hp = 12
             exp = 0
             fatk = 10
             creet = 5
             local = 1
+            nowhp = 12
+            tempPts = 0
+            frakabonus = "Отсутствует"
             ref = 'Отсутствует'
-            print('net')
     needexp = int(lvl) * 100
-    BM = int(atk + hp + (((fatk/100) + (creet/100)) * 10))
     if str(m.from_user.id) in donators:
         donate = '✅Активен'
     else:
         donate = '❌'
+    if bankNo != user_id:
+        bankNo = "Отсутствует"
+    elif bankNo == user_id:
+        bankNo = "Есть"
     if local == 1:
         location = "Respawn"
         if (lvl >= 5):
@@ -358,14 +400,97 @@ def profileBeta(m):
     elif local == 4:
         location = "Мэрия"
         locinfo = ""
-    if lvl >= 3 :
-        stats = "🕴Профиль🕴 \n \n📘Ваш никнейм - " + str(username) + "\n📕Ваш ID - " + str(user_id) + "\n🔰Донат-статус - " + str(donate) + "\n📒Количество поинтов - " + str(points) + "\n⭐️Опыт: " + str(exp) + " / {0} \n📗Ваш уровень - " + str(lvl) + "\n◻️Ваш реферер: " + str(ref) + "\n📡Локация - " + str(location) + "\n💪Очки Боевой Мощи - " + str(BM) + "\n💢Ваша атака - " + str(atk) + "\n❤️Ваше здоровье - " + str(hp) + "\n🦀Шанс первой атаки - " + str(fatk) + "% \n💥Шанс крита - " + str(creet) + "% \n🤛Навык кражи - " + str(krazha) + " \n        /myrefs              /shop" + str(locinfo)
+    elif local == 5:
+        location = "Заснеженная кавайня"
+        #if (lvl >= 10):
+            #locinfo = "\n🆕Вам доступна локация ''заснеженная кавайня''! Используйте /next_location для перехода🆕"
+        #else:
+        locinfo = ""
+        if (int(frakaStatus) == 1) or (int(frakaStatus) == 2):
+            frakaName = frakaName
+        else:
+            frakaName = "Отсутствует"
+        if itemNow == 999:
+            stats = "❄Профиль❄ \n \n📘Ваша кликуха - " + str(username) + "\n📕Порядковый номер - " + str(user_id) + "\n🔰Пидор-статус -  ✅Активен"
+            profilemsg = bot.reply_to(m, stats)
+            return
+    if lvl >= 2 :
+        stats = "ℹ️Профильℹ️ \n \n📘Ваш никнейм - " + str(username) + "\n📕Ваш ID - " + str(user_id) + "\n🔰Донат-статус - " + str(donate) + "\n📒Количество поинтов - " + str(points) + "" + "\n⭐️Опыт: " + str(exp) + " / {0} \n📗Ваш уровень - " + str(lvl) + "\n◻️Ваш реферер: " + str(ref) + "\n📡Локация - " + str(location) + "\n📓Фракция: " + str(frakaName) + "\n💸Доход с фракции: " + str(frakabonus) + "\n🔑Банковская ячейка: " + str(bankNo) + "\n💴Текущий депозит: " + str(bankInv) + "\n" + str(locinfo) + "\n" + str(notif) + "\n    /myrefs        /shop        /stats"
         profilemsg = bot.reply_to(m, stats.format(str(needexp)))
     else:
-        stats = "🕴Профиль🕴 \n \n📘Ваш никнейм - " + str(username) + "\n📕Ваш ID - " + str(user_id) + "\n🔰Донат-статус - " + str(donate) + "\n📒Количество поинтов - " + str(points) + "\n⭐️Опыт: " + str(exp) + " / {0} \n📗Ваш уровень - " + str(lvl) + "\n◻️Ваш реферер: " + str(ref) + "\n          /myrefs              /giveaway"
+        stats = "ℹ️Профильℹ️ \n \n📘Ваш никнейм - " + str(username) + "\n📕Ваш ID - " + str(user_id) + "\n🔰Донат-статус - " + str(donate) + "\n📒Количество поинтов - " + str(points) + " \n⭐️Опыт: " + str(exp) + " / {0} \n📗Ваш уровень - " + str(lvl) + "\n◻️Ваш реферер: " + str(ref) + "\n" + str(notif) + "\n          /myrefs              /giveaway"
         profilemsg = bot.reply_to(m, stats.format(str(needexp)))
     
     
+    
+
+
+
+@bot.message_handler(commands=['stats'])
+def stats(m):
+    db = pymysql.connect(host='localhost',
+                         user='root',
+                         password='maz1aan16v',                             
+                         db='Megumin',
+                         charset='utf8mb4',
+                         cursorclass=pymysql.cursors.DictCursor)
+    with db.cursor() as cursor:
+        sql = "SELECT * FROM `users` WHERE `user_id` = %s"
+        cursor.execute(sql, (m.from_user.id))
+        result = cursor.fetchone()
+        if result:
+            print(result)
+            user_id = result['id']
+            username = result['username']
+            exp = result['exp']
+            lvl = int(result['lvl'])
+            points = result['points']
+            atk = result['atk']
+            hp = result['hp']
+            fatk = result['fatk']
+            creet = result['creet']
+            local = int(result['local'])
+            ref = result['ref']
+            krazha = result['krazha']
+            nowhp = int(result['nowhp'])
+            frakaName = result['frakaName']
+            frakaStatus = int(result['frakaStatus'])
+            tempPts = int(result['tempPts'])
+            frakaBonus = int(result['frakaBonus'])
+            itemNow = int(result['item'])
+            itemn = items.item(itemNow)
+            azart = int(result['azart'])
+            dog = result['dog']
+            dogLvl = int(result['dogLvl'])
+            dogAtk = int(result['dogAtk'])
+            dogHp = int(result['dogHp'])
+            dogFatk = int(result['dogFatk'])
+            dogCreet = int(result['dogCreet'])
+            dogEat = int(result['dogEat'])
+            db.close()
+            if lvl >= 2:
+                pass
+            else:
+                bot.reply_to(m, "Тебе сюда рано")
+                return
+            if lvl >= 2 :
+                if nowhp > hp:
+                    nowhp = hp
+            else:
+                pass
+            BM = int(atk + hp + (((fatk/100) + (creet/100)) * 10))
+            stats = bot.reply_to(m, "\n💪Очки Боевой Мощи - " + str(BM) + "\n✊В руке - " + str(itemn) + "\n💢Ваша атака - " + str(atk) + "\n❤️Ваше здоровье - " + str(nowhp) + "/" + str(hp) + "\n🦀Шанс первой атаки - " + str(fatk) + "% \n💥Шанс крита - " + str(creet) + "% \n🤛Навык кражи - " + str(krazha) + "\n🎰Навык азарта - " + str(azart) + "/5 lvl \nПомощник: " + str(dog) + "\nЭнергия помощника: " + str(dogEat) + "/100\nУровень помощника: " + str(dogLvl) + "\n+{}Atk \n+{}Hp \n+{}%Fatk \n+{}%Creet".format(dogAtk, dogHp, dogFatk, dogCreet))
+            return
+
+
+
+
+
+
+
+
+
+
 @bot.message_handler(commands=['seeprofile'])
 def profileAdm(m):
     if str(m.from_user.id) in owner:
@@ -401,41 +526,6 @@ def profileAdm(m):
         bot.reply_to(m, "Команда доступна только разработчикам.")
         
         
-@bot.message_handler(commands=['shop'])
-def shop(m):
-    db = pymysql.connect(host='localhost',
-                         user='root',
-                         password='maz1aan16v',                             
-                         db='Megumin',
-                         charset='utf8mb4',
-                         cursorclass=pymysql.cursors.DictCursor)
-    with db.cursor() as cursor:
-        sql = "SELECT * FROM `users` WHERE `user_id` = %s"
-        cursor.execute(sql, (m.from_user.id))
-        result = cursor.fetchone()
-        lvl = int(result['lvl'])
-        atk = int(result['atk'])
-        hp = int(result['hp'])
-        fatk = int(result['fatk'])
-        creet = int(result['creet'])
-        krazha = int(result['krazha'])
-        db.close()
-    if lvl >= 3 :
-        pass
-    else:
-        bot.reply_to(m, "Магазин откроется на 3 уровне.")
-        return
-    needAtk = int(10 * ((atk - 19) / 6))
-    needHp = int(10 * ((hp - 19) / 6))
-    needFatk = int(15 * ((fatk - 9) / 6))
-    needCreet = int(20 * ((creet - 4) / 3))
-    if krazha >= 1:
-        textKrazha = "Навык кражи"
-        needKrazha = int(krazha * 150)
-    else:
-        textKrazha = "Способность кражи"
-        needKrazha = 100
-    bot.reply_to(m, "Магазин: \n Команда - описание - стоимость. \n💢/buy_atk - +1 ед.атаки - {0} pts \n❤️/buy_hp +1 ед. здоровья - {1} pts \n🦀/buy_fatk - +1% шанс первой атаки - {2} pts \n💥/buy_crt - +1% шанс крита - {3} pts\n🔴/buy_nick - Смена никнейма - 500 pts \n🤛/buy_krazha - {4} - {5} pts ".format(str(needAtk), str(needHp), str(needFatk), str(needCreet), str(textKrazha), str(needKrazha)))
 
 
 
@@ -508,7 +598,7 @@ def nextLoc(m):
             sql = "UPDATE `users` SET `local` = 2 WHERE `user_id` = %s"
             cursor.execute(sql, (m.from_user.id))
             db.commit()
-            complete = "Вы успешно перешли в локацию ''таксопарк''."
+            complete = "Таксопарк - один из тех немногих районов, где обитает куча бандитов, которые разгуливают в масках, туристы дерутся за свободное такси, а еще тут попадается оживший банкомат. Сможешь выбраться отсюда живым?"
             bot.edit_message_text(complete, go.chat.id, go.message_id)
         elif (location == 2) and (lvl >= 7):
             go = bot.reply_to(m, "Переходим в локацию ''Dungeon''... Это займет некоторое время...")
@@ -524,9 +614,16 @@ def nextLoc(m):
             sql = "UPDATE `users` SET `local` = 4 WHERE `user_id` = %s"
             cursor.execute(sql, (m.from_user.id))
             db.commit()
-            complete = "Вы успешно перешли в локацию ''Мэрия''."
+            complete = "Мэрия... Казалось бы, центр города, какие тут могут быть опасности? Могут, еще как. Неадекватный губернатор, кучка бывших губернаторов, немало влиятельных людей в разных сферах - все это тут. Ребята тут серьёзнее чем в таксопарке, ибо тут - самые влиятельные люди штата."
+            bot.edit_message_text(complete, go.chat.id, go.message_id)
+        elif (location == 4) and (lvl >= 10):
+            go = bot.reply_to(m, "Переходим в локацию ''казино''... Это займет некоторое время...")
+            time.sleep(5)
+            sql = "UPDATE `users` SET `local` = 5 WHERE `user_id` = %s"
+            cursor.execute(sql, (m.from_user.id))
+            db.commit()
+            complete = "Если ты считаешь, что весь кошмар позади - добро пожаловать в казино! Здесь на кон ставят не деньги - жизнь. Проституция, криминал и деньги - все это тут."
             bot.edit_message_text(complete, go.chat.id, go.message_id)
         else:
             bot.reply_to(m, "Сначала закончите свои дела в этой локации!")
-            
         db.close()
